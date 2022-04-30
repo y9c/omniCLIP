@@ -245,6 +245,7 @@ class sparse_glm(statsmodels.genmod.generalized_linear_model.GLM):
                 dev = self.family.deviance(self.endog, mu)
 
                 if np.isnan(dev):
+
                     dump_path = os.path.join(
                         self.tmp_dir,
                         "tmpdump." + time.asctime().replace(" ", "_") + ".dat",

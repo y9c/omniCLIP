@@ -1,28 +1,28 @@
+"""omniCLIP is a CLIP-Seq peak caller.
+
+Copyright (C) 2017 Philipp Boss
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-    omniCLIP is a CLIP-Seq peak caller
 
-    Copyright (C) 2017 Philipp Boss
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-import numpy as np
 import random
-from scipy.special import logsumexp
-from sklearn.linear_model import SGDClassifier
 import sys
 import time
+
+import numpy as np
+from scipy.special import logsumexp
+from sklearn.linear_model import SGDClassifier
 
 from ..data_parsing import tools
 from .utils import get_mem_usage
@@ -35,15 +35,19 @@ def PredictTransistions(
     return PredictTransistionsSimple(Counts, TransitionParameters, NrOfStates)
 
 
-def PredictTransistionsSimple(Counts, TransitionParameters, NrOfStates, verbosity=1):
+def PredictTransistionsSimple(
+    Counts, TransitionParameters, NrOfStates, verbosity=1
+):
     """Predict the transition probabilities for a gene."""
     TransitionParametersLogReg = TransitionParameters[1]
-    TransistionProb = np.ones((NrOfStates, NrOfStates, Counts.shape[1])) * np.log(
-        (1 / np.float64(NrOfStates))
-    )
+    TransistionProb = np.ones(
+        (NrOfStates, NrOfStates, Counts.shape[1])
+    ) * np.log((1 / np.float64(NrOfStates)))
 
     # Genererate the features
-    CovMat = GenerateFeatures(np.array(list(range(Counts.shape[1] - 1))), Counts)
+    CovMat = GenerateFeatures(
+        np.array(list(range(Counts.shape[1] - 1))), Counts
+    )
 
     ix_nonzero = np.sum(CovMat, axis=0) > 0
     # Create the probabilities
@@ -71,7 +75,8 @@ def PredictTransistionsSimple(Counts, TransitionParameters, NrOfStates, verbosit
                 # Zero entries
                 first_zero_pos = np.where(ix_nonzero == 0)[0][0]
                 NormFactor[ix_nonzero == 0] = logsumexp(
-                    TransistionProb[:, CurrentState, 1:][:, first_zero_pos], axis=0
+                    TransistionProb[:, CurrentState, 1:][:, first_zero_pos],
+                    axis=0,
                 )
 
         for NextState in range(NrOfStates):
@@ -84,16 +89,21 @@ def PredictTransistionsSimple(Counts, TransitionParameters, NrOfStates, verbosit
 def FitTransistionParameters(
     Sequences, Background, TransitionParameters, CurrPath, verbosity=1
 ):
+
     """Determine optimal logistic regression parameters.
 
-    Return the optimal parameters of the logistic regression for predicting
-    the TransitionParameters.
+    Return the optimal parameters of the logistic regression for
+    predicting the TransitionParameters.
     """
     print("Fitting transition parameters")
     get_mem_usage(verbosity)
 
     NewTransitionParametersLogReg = FitTransistionParametersSimple(
-        Sequences, Background, TransitionParameters, CurrPath, verbosity=verbosity
+        Sequences,
+        Background,
+        TransitionParameters,
+        CurrPath,
+        verbosity=verbosity,
     )
 
     get_mem_usage(verbosity)
@@ -106,8 +116,8 @@ def FitTransistionParametersSimple(
 ):
     """Determine optimal logistic regression parameters.
 
-    Return the optimal parameters of the logistic regression for predicting
-    the TransitionParameters.
+    Return the optimal parameters of the logistic regression for
+    predicting the TransitionParameters.
     """
     # Generate features from the CurrPaths and the Information in the coverage
     TransitionMatrix = TransitionParameters[0]
@@ -115,7 +125,9 @@ def FitTransistionParametersSimple(
     t = time.time()
 
     # Iterate over the possible transitions
-    assert TransitionMatrix.shape[0] > 1, "Only two states are currently allowed"
+    assert (
+        TransitionMatrix.shape[0] > 1
+    ), "Only two states are currently allowed"
 
     genes = list(CurrPath.keys())
     genes = random.sample(genes, min(len(genes), 1000))
@@ -175,7 +187,10 @@ def FitTransistionParametersSimple(
 
     # Create Y
     Y = np.hstack(
-        (np.ones((1, len_same), dtype=np.int), np.zeros((1, len_other), dtype=np.int))
+        (
+            np.ones((1, len_same), dtype=np.int),
+            np.zeros((1, len_other), dtype=np.int),
+        )
     )[0, :].T
     classes = np.unique(Y)
 
