@@ -1,38 +1,36 @@
+"""omniCLIP is a CLIP-Seq peak caller.
+
+Copyright (C) 2017 Philipp Boss
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-    omniCLIP is a CLIP-Seq peak caller
 
-    Copyright (C) 2017 Philipp Boss
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-from collections import defaultdict
-from scipy.special import logsumexp
-from scipy.sparse import csr_matrix
-from scipy.stats import nbinom
-import h5py
 import itertools
 import multiprocessing
+import time
+from collections import defaultdict
+
+import h5py
 import numpy as np
 import pandas as pd
-import time
+from scipy.sparse import csr_matrix
+from scipy.special import logsumexp
+from scipy.stats import nbinom
 
-from . import LoadReads
 from .. import viterbi
-from ..omni_stat import diag_event_model
-from ..omni_stat import emission_prob
-from ..omni_stat import trans
+from ..omni_stat import diag_event_model, emission_prob, trans
+from . import LoadReads
 
 
 def GetModelIx(
@@ -115,14 +113,18 @@ def StackData(Sequences, add="all", use_strand="True"):
         else:
             CurrStack = np.zeros((nr_of_repl, gene_len))
             for rep in repls:
-                CurrStack[int(rep), :] += Sequences["Coverage"][rep].sum(axis=0)
+                CurrStack[int(rep), :] += Sequences["Coverage"][rep].sum(
+                    axis=0
+                )
     elif add == "only_var":
         CurrStack = np.zeros((nr_of_repl, gene_len))
         for rep in repls:
             CurrStack[int(rep), :] += Sequences["Variants"][rep].sum(axis=0)
 
     elif add == "only_var_summed":
-        CurrStack = np.zeros((Sequences["Variants"][repls[0]].shape[0], gene_len))
+        CurrStack = np.zeros(
+            (Sequences["Variants"][repls[0]].shape[0], gene_len)
+        )
         for rep in repls:
             if use_strand and (not (Sequences["strand"] == 1)):
                 CurrStack += Sequences["Variants"][rep][Track_strand_map, :]
@@ -145,21 +147,33 @@ def StackData(Sequences, add="all", use_strand="True"):
         for rep in list(Sequences["Variants"].keys()):
             if use_strand and (not (Sequences["strand"] == 1)):
                 CurrStack[
-                    row_counter : (row_counter + Sequences["Variants"][rep].shape[0]), :
+                    row_counter : (
+                        row_counter + Sequences["Variants"][rep].shape[0]
+                    ),
+                    :,
                 ] = Sequences["Variants"][rep][Track_strand_map, :]
             else:
                 CurrStack[
-                    row_counter : (row_counter + Sequences["Variants"][rep].shape[0]), :
+                    row_counter : (
+                        row_counter + Sequences["Variants"][rep].shape[0]
+                    ),
+                    :,
                 ] = Sequences["Variants"][rep]
             row_counter += Sequences["Variants"][rep].shape[0]
 
             CurrStack[
-                row_counter : (row_counter + Sequences["Read-ends"][rep].shape[0]), :
+                row_counter : (
+                    row_counter + Sequences["Read-ends"][rep].shape[0]
+                ),
+                :,
             ] = Sequences["Read-ends"][rep]
             row_counter += Sequences["Read-ends"][rep].shape[0]
 
             CurrStack[
-                row_counter : (row_counter + Sequences["Coverage"][rep].shape[0]), :
+                row_counter : (
+                    row_counter + Sequences["Coverage"][rep].shape[0]
+                ),
+                :,
             ] = Sequences["Coverage"][rep]
             row_counter += Sequences["Coverage"][rep].shape[0]
 
@@ -187,7 +201,9 @@ def PreloadSequencesForGene(Sequences, gene):
                         shape=Sequences[gene]["Variants"][rep]["shape"][:],
                     ).toarray()
                 else:
-                    Sequences_per_gene[key][rep] = Sequences[gene][key][rep][()]
+                    Sequences_per_gene[key][rep] = Sequences[gene][key][rep][
+                        ()
+                    ]
 
     return Sequences_per_gene
 
@@ -404,8 +420,8 @@ def ConvertSuffStatToArrays(SuffStat):
 def repl_track_nr(ex_list, offset):
     """Compute replicate list offset.
 
-    Compute for a list of tracks in one replicate additionaly the list for the
-    second replicate.
+    Compute for a list of tracks in one replicate additionaly the list
+    for the second replicate.
     """
     return ex_list + list(np.array(ex_list) + offset)
 
@@ -502,7 +518,9 @@ def generate_bed(file, pv_cutoff=0.05):
     ].sort_values("SiteScore", ascending=False)
 
     # Write the output
-    df.to_csv(file.replace(".txt", ".bed"), sep="\t", header=False, index=False)
+    df.to_csv(
+        file.replace(".txt", ".bed"), sep="\t", header=False, index=False
+    )
     return
 
 
@@ -550,7 +568,9 @@ def GetSites(
 
     LoadReads.close_data_handles(handles=[Sequences, Background])
     if EmissionParameters["nb_proc"] == 1:
-        ScoredSites = dict([GetSitesForGene(curr_slice) for curr_slice in data])
+        ScoredSites = dict(
+            [GetSitesForGene(curr_slice) for curr_slice in data]
+        )
     else:
         pool = multiprocessing.get_context("spawn").Pool(
             EmissionParameters["nb_proc"], maxtasksperchild=10
@@ -619,7 +639,9 @@ def GetSitesForGene(data):
     ix_sites = np.zeros_like(Ix)
     ix_sites_len = Ix.shape[0]
     for currsite in Sites[gene]:
-        ix_sites[max(0, currsite[0] - 1) : min(ix_sites_len, currsite[1] + 1)] = 1
+        ix_sites[
+            max(0, currsite[0] - 1) : min(ix_sites_len, currsite[1] + 1)
+        ] = 1
     ix_sites = ix_sites == 1
 
     # 2) Compute the probabilities for both states
@@ -650,7 +672,11 @@ def GetSitesForGene(data):
         EmmisionProbGene[State, ix_sites] = np.log(
             weight1
         ) + emission_prob.predict_expression_log_likelihood_for_gene(
-            CurrStackSum[:, ix_sites], State, nr_of_genes, gene_nr, EmissionParameters
+            CurrStackSum[:, ix_sites],
+            State,
+            nr_of_genes,
+            gene_nr,
+            EmissionParameters,
         )
         if EmissionParameters["bg_type"] == "Coverage":
             EmmisionProbGene[State, ix_sites] += np.log(
@@ -679,7 +705,9 @@ def GetSitesForGene(data):
         ) + diag_event_model.pred_log_lik(
             CurrStackVar[:, Ix], State, EmissionParameters
         )
-        EmmisionProbGene[State, Ix] += np.log(weight2) + EmmisionProbGeneDir[State, Ix]
+        EmmisionProbGene[State, Ix] += (
+            np.log(weight2) + EmmisionProbGeneDir[State, Ix]
+        )
 
     Counts = StackData(Sequences_per_gene, add="all")
 
@@ -739,7 +767,9 @@ def GetSitesForGene(data):
         n = (mean_mat_fg**2) / (var_mat_fg - mean_mat_fg)
         site["pv"] = nbinom.logsf(counts_fg, n, p)
         site["max_pos"] = get_max_position(Score, currsite, fg_state, strand)
-        site["dir_score"] = EvaluateSite(EmmisionProbGeneDir, currsite, fg_state)
+        site["dir_score"] = EvaluateSite(
+            EmmisionProbGeneDir, currsite, fg_state
+        )
         if site["SiteScore"] < 0.0:
             continue
         sites.append(site)
@@ -760,12 +790,20 @@ def convert_paths_to_sites(
         curr_path = Paths[gene] == fg_state
         Starts = np.where(
             np.concatenate(
-                ([curr_path[0]], curr_path[:-1] != curr_path[1:], [curr_path[-1]])
+                (
+                    [curr_path[0]],
+                    curr_path[:-1] != curr_path[1:],
+                    [curr_path[-1]],
+                )
             )
         )[0][::2]
         Stops = np.where(
             np.concatenate(
-                ([curr_path[0]], curr_path[:-1] != curr_path[1:], [curr_path[-1]])
+                (
+                    [curr_path[0]],
+                    curr_path[:-1] != curr_path[1:],
+                    [curr_path[-1]],
+                )
             )
         )[0][1::2]
         nr_sites = Starts.shape[0]
@@ -779,7 +817,13 @@ def convert_paths_to_sites(
 
 
 def ComputeStatsForSite(
-    CountsSeq, CountsBck, Site, fg_state, nr_of_genes, gene_nr, EmissionParameters
+    CountsSeq,
+    CountsBck,
+    Site,
+    fg_state,
+    nr_of_genes,
+    gene_nr,
+    EmissionParameters,
 ):
     """Get the score for a Site."""
     Start = Site[0]
@@ -809,7 +853,14 @@ def ComputeStatsForSite(
     counts_fg = np.sum(np.sum(CountsSeq[:, Start : (Stop + 1)], axis=0))
     counts_bg = np.sum(np.sum(CountsBck[:, Start : (Stop + 1)], axis=0))
 
-    return mean_mat_fg, var_mat_fg, mean_mat_bg, var_mat_bg, counts_fg, counts_bg
+    return (
+        mean_mat_fg,
+        var_mat_fg,
+        mean_mat_bg,
+        var_mat_bg,
+        counts_fg,
+        counts_bg,
+    )
 
 
 def get_max_position(Score, Site, fg_state, strand):
@@ -830,7 +881,9 @@ def get_max_position(Score, Site, fg_state, strand):
         print("Score problematic")
         SiteScore = FGScore
 
-    max_pos = np.int64(np.round(np.mean(np.where(SiteScore == np.max(SiteScore))[0])))
+    max_pos = np.int64(
+        np.round(np.mean(np.where(SiteScore == np.max(SiteScore))[0]))
+    )
     if strand == -1:
         pos = Stop - Start - max_pos
     else:
@@ -874,7 +927,15 @@ def WriteResults(Sequences, Background, ScoredSites, OutFile, GeneAnnotation):
     ]
     Header = (
         "\t".join(
-            ["Gene", "ChrName", "Start", "Stop", "Strand", "SiteScore", "Coverage"]
+            [
+                "Gene",
+                "ChrName",
+                "Start",
+                "Stop",
+                "Strand",
+                "SiteScore",
+                "Coverage",
+            ]
             + VariantList
             + [
                 "mean_mat_fg",
@@ -946,7 +1007,9 @@ def estimate_library_size(Sequences):
     # Get the gene expressions
     for gene in list(Sequences.keys()):
         for key in list(Sequences[gene]["Coverage"].keys()):
-            lib_size_dict[key].append(Sequences[gene]["Coverage"][key][()].sum())
+            lib_size_dict[key].append(
+                Sequences[gene]["Coverage"][key][()].sum()
+            )
 
     # Compute the (weighted) median of non zero genes
     for key in lib_size_dict:
@@ -993,7 +1056,9 @@ def ParallelGetMostLikelyPath(
     LoadReads.close_data_handles(handles=[Sequences, Background])
 
     if EmissionParameters["nb_proc"] == 1:
-        results = [ParallelGetMostLikelyPathForGene(curr_slice) for curr_slice in data]
+        results = [
+            ParallelGetMostLikelyPathForGene(curr_slice) for curr_slice in data
+        ]
     else:
         print("Spawning processes")
         pool = multiprocessing.get_context("spawn").Pool(
@@ -1006,7 +1071,10 @@ def ParallelGetMostLikelyPath(
         results = [res for res in results]
 
     MostLikelyPaths = dict(
-        zip([result[0] for result in results], [result[1] for result in results])
+        zip(
+            [result[0] for result in results],
+            [result[1] for result in results],
+        )
     )
 
     # Compute the logliklihood of the gene
@@ -1068,7 +1136,9 @@ def ParallelGetMostLikelyPathForGene(data):
         Ix = GetModelIx(Sequences_per_gene)
 
     # 2) Compute the probabilities for both states
-    EmmisionProbGene = np.ones((NrOfStates, Ix.shape[0])) * (1 / np.float64(NrOfStates))
+    EmmisionProbGene = np.ones((NrOfStates, Ix.shape[0])) * (
+        1 / np.float64(NrOfStates)
+    )
 
     CurrStackSum = StackData(Sequences_per_gene)
     CurrStackVar = StackData(Sequences_per_gene, add="no")
@@ -1089,11 +1159,17 @@ def ParallelGetMostLikelyPathForGene(data):
 
     for State in range(NrOfStates):
         if not EmissionParameters["ign_GLM"]:
-            if isinstance(EmissionParameters["ExpressionParameters"][0], np.ndarray):
+            if isinstance(
+                EmissionParameters["ExpressionParameters"][0], np.ndarray
+            ):
                 EmmisionProbGene[State, :] = np.log(
                     weight1
                 ) + emission_prob.predict_expression_log_likelihood_for_gene(
-                    CurrStackSum, State, nr_of_genes, gene_nr, EmissionParameters
+                    CurrStackSum,
+                    State,
+                    nr_of_genes,
+                    gene_nr,
+                    EmissionParameters,
                 )
                 if EmissionParameters["bg_type"] == "Coverage":
                     EmmisionProbGene[State, :] += np.log(
@@ -1138,7 +1214,9 @@ def ParallelGetMostLikelyPathForGene(data):
 
     # Get the transition probabilities
     TransistionProbabilities = np.float64(
-        np.tile(np.log(TransitionParameters[0]), (EmmisionProbGene.shape[1], 1, 1)).T
+        np.tile(
+            np.log(TransitionParameters[0]), (EmmisionProbGene.shape[1], 1, 1)
+        ).T
     )
 
     CurrPath, Currloglik = viterbi.viterbi(
@@ -1173,7 +1251,9 @@ def subsample_suff_stat(Counts, NrOfCounts, subsample_size=250000):
             for temp_key in Counts:
                 if NrOfCounts[temp_key].shape[0] > 10:
                     NrOfCounts[key] = np.ones((1, 10))
-                    ix = np.random.randint(NrOfCounts[temp_key].shape[0], size=10)
+                    ix = np.random.randint(
+                        NrOfCounts[temp_key].shape[0], size=10
+                    )
                     Counts[key] = Counts[temp_key][:, ix]
                     break
 

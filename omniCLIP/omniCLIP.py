@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__version__ = "0.2.7"
+__version__ = "0.2.8"
 
 import argparse
 import gc
@@ -562,6 +562,7 @@ def main():
         description="omniCLIP - probabilistic identification of protein-RNA interactions from CLIP-seq data.\n\n"
         + "This is fork version by Chang Y.\n"
         + "Please cite the original paper: Drewe-Boss, P., Wessels, HH. & Ohler, U. omniCLIP: probabilistic identification of protein-RNA interactions from CLIP-seq data. Genome Biol 19, 183 (2018). https://doi.org/10.1186/s13059-018-1521-2",
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument("--version", action="version", version=__version__)
     subparsers = parser.add_subparsers(

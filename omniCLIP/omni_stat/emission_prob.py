@@ -1,32 +1,31 @@
+"""omniCLIP is a CLIP-Seq peak caller.
+
+Copyright (C) 2017 Philipp Boss
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-    omniCLIP is a CLIP-Seq peak caller
 
-    Copyright (C) 2017 Philipp Boss
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-from scipy import special
-from scipy.sparse import csc_matrix, coo_matrix
-from scipy.stats import nbinom
-import h5py
 import itertools
 import multiprocessing
-import numpy as np
-import os
-import scipy as sp
 import time
+
+import h5py
+import numpy as np
+import scipy as sp
+from scipy import special
+from scipy.sparse import coo_matrix, csc_matrix
+from scipy.stats import nbinom
 
 from . import sparse_glm
 from .utils import get_mem_usage
@@ -79,7 +78,9 @@ def estimate_expression_param(expr_data, verbosity=1):
     if not sp.sparse.isspmatrix_csc(A):
         A = csc_matrix(A)
 
-    get_mem_usage(verbosity, msg="Estimating expression parameters: before GLM matrix")
+    get_mem_usage(
+        verbosity, msg="Estimating expression parameters: before GLM matrix"
+    )
 
     # Create the offset for the library size
     offset = np.zeros_like(rep)
@@ -107,11 +108,15 @@ def estimate_expression_param(expr_data, verbosity=1):
         tmp_dir=EmissionParameters["tmp_dir"],
     )
 
-    get_mem_usage(verbosity, msg="Estimating expression parameters: after fitting")
+    get_mem_usage(
+        verbosity, msg="Estimating expression parameters: after fitting"
+    )
 
     del A, w, Y, offset
 
-    get_mem_usage(verbosity, t=t, msg="Estimating expression parameters: after cleanup")
+    get_mem_usage(
+        verbosity, t=t, msg="Estimating expression parameters: after cleanup"
+    )
 
     # 5) Process the output
     EmissionParameters["ExpressionParameters"] = [start_params, disp]
@@ -158,9 +163,13 @@ def construct_glm_matrix(EmissionParameters, Sequences, Background, Paths):
                     EmissionParameters["verbosity"],
                 )
 
-                (gene_mat, weights, y, reps, new_pos) = process_gene_for_glm_mat(
-                    curr_data
-                )
+                (
+                    gene_mat,
+                    weights,
+                    y,
+                    reps,
+                    new_pos,
+                ) = process_gene_for_glm_mat(curr_data)
 
                 del curr_data
                 curr_mats.append(gene_mat)
@@ -206,7 +215,9 @@ def construct_glm_matrix(EmissionParameters, Sequences, Background, Paths):
 
     # Add row with pseudo counts
     if not bg_type == "None":
-        replicates_bck = list(Background[list(Sequences.keys())[0]]["Coverage"].keys())
+        replicates_bck = list(
+            Background[list(Sequences.keys())[0]]["Coverage"].keys()
+        )
         # Process the background
         if EmissionParameters["nb_proc"] == 1:
             for gene_nr, gene in enumerate(Sequences):
@@ -214,7 +225,9 @@ def construct_glm_matrix(EmissionParameters, Sequences, Background, Paths):
                     if bg_type == "Const":
                         gene_rep_background = Background[gene][curr_rep][()]
                     else:
-                        gene_rep_background = Background[gene]["Coverage"][curr_rep][()]
+                        gene_rep_background = Background[gene]["Coverage"][
+                            curr_rep
+                        ][()]
 
                     curr_data = (
                         Paths[gene],
@@ -228,9 +241,13 @@ def construct_glm_matrix(EmissionParameters, Sequences, Background, Paths):
                         fg_state,
                         bg_state,
                     )
-                    gene_mat, weights, y, reps, new_pos = process_bck_gene_for_glm_mat(
-                        curr_data
-                    )
+                    (
+                        gene_mat,
+                        weights,
+                        y,
+                        reps,
+                        new_pos,
+                    ) = process_bck_gene_for_glm_mat(curr_data)
                     curr_mats.append(gene_mat)
                     curr_weights.append(weights)
                     curr_ys.append(y)
@@ -276,7 +293,9 @@ def construct_glm_matrix(EmissionParameters, Sequences, Background, Paths):
             pool = multiprocessing.get_context("spawn").Pool(
                 EmissionParameters["nb_proc"], maxtasksperchild=100
             )
-            results = pool.imap(process_bck_gene_for_glm_mat, data, chunksize=1)
+            results = pool.imap(
+                process_bck_gene_for_glm_mat, data, chunksize=1
+            )
             pool.close()
             pool.join()
             results = [res for res in results]
@@ -305,7 +324,8 @@ def construct_glm_matrix(EmissionParameters, Sequences, Background, Paths):
 def process_bck_gene_for_glm_mat(data):
     """Compute coverage at each position in each state.
 
-    Returns a dictionary with the histogram with of the counts in each state.
+    Returns a dictionary with the histogram with of the counts in each
+    state.
     """
     (
         CurrGenePath,
@@ -400,12 +420,16 @@ def process_bck_gene_for_glm_mat(data):
 
                     if CurrState == fg_state:
                         curr_data.append(-np.ones(nr_of_obs))
-                        curr_rows.append(np.arange(curr_pos, curr_pos + nr_of_obs))
+                        curr_rows.append(
+                            np.arange(curr_pos, curr_pos + nr_of_obs)
+                        )
                         curr_cols.append(np.ones(nr_of_obs) * (nr_of_genes))
 
                     elif CurrState == bg_state:
                         curr_data.append(np.ones(nr_of_obs))
-                        curr_rows.append(np.arange(curr_pos, curr_pos + nr_of_obs))
+                        curr_rows.append(
+                            np.arange(curr_pos, curr_pos + nr_of_obs)
+                        )
                         curr_cols.append(np.ones(nr_of_obs) * (nr_of_genes))
 
                 else:
@@ -454,7 +478,8 @@ def process_bck_gene_for_glm_mat(data):
 def process_gene_for_glm_mat(data):
     """Compute how much coverage is at each position in each state.
 
-    Returns a dictionary with the histogram with of the counts in each state.
+    Returns a dictionary with the histogram with of the counts in each
+    state.
     """
     (
         CurrGenePath,
@@ -510,7 +535,10 @@ def process_gene_for_glm_mat(data):
             curr_pos += nr_of_sample_sub
             nr_of_rows += nr_of_sample_sub
             if verbosity:
-                print("estimating gene expression on background for gene: " + gene)
+                print(
+                    "estimating gene expression on background for gene: "
+                    + gene
+                )
             # Assume that it is from the state with lower counts
 
     for CurrState in range(NrOfStates):
@@ -562,14 +590,20 @@ def process_gene_for_glm_mat(data):
             # Add rows for transcript abundance
             curr_cols.append(np.ones(nr_of_obs) * gene_nr)
             # Add rows for foreground and background
-            if not ((bg_type == "Coverage_bck") and (CurrState == (NrOfStates - 1))):
+            if not (
+                (bg_type == "Coverage_bck") and (CurrState == (NrOfStates - 1))
+            ):
                 curr_data.append(np.ones(nr_of_obs))
                 curr_rows.append(np.arange(curr_pos, curr_pos + nr_of_obs))
-                curr_cols.append(np.ones(nr_of_obs) * (nr_of_genes + CurrState))
+                curr_cols.append(
+                    np.ones(nr_of_obs) * (nr_of_genes + CurrState)
+                )
             else:  # TODO: Code duplication
                 curr_data.append(np.ones(nr_of_obs))
                 curr_rows.append(np.arange(curr_pos, curr_pos + nr_of_obs))
-                curr_cols.append(np.ones(nr_of_obs) * (nr_of_genes + CurrState))
+                curr_cols.append(
+                    np.ones(nr_of_obs) * (nr_of_genes + CurrState)
+                )
 
         curr_pos += nr_of_obs
         nr_of_rows += nr_of_obs
@@ -767,25 +801,37 @@ def get_expected_mean_and_var(
                 if State < nr_of_states - 1:
                     GLM_mat[rep, :] += np.ones((1)) * start_params[gene_nr, 0]
                     if State == fg_state:  # Skip the last state
-                        GLM_mat[rep, :] += np.ones((1)) * start_params[nr_of_genes, 0]
+                        GLM_mat[rep, :] += (
+                            np.ones((1)) * start_params[nr_of_genes, 0]
+                        )
                     elif State == bg_state:  # TODO: Code duplication
-                        GLM_mat[rep, :] -= np.ones((1)) * start_params[nr_of_genes, 0]
+                        GLM_mat[rep, :] -= (
+                            np.ones((1)) * start_params[nr_of_genes, 0]
+                        )
                     else:
                         continue
                 else:
-                    GLM_mat[rep, :] += np.ones((1)) * start_params[nr_of_genes + 1, 0]
+                    GLM_mat[rep, :] += (
+                        np.ones((1)) * start_params[nr_of_genes + 1, 0]
+                    )
 
             elif bg_type == "Coverage":
                 GLM_mat[rep, :] += np.ones((1)) * start_params[gene_nr, 0]
                 if State == fg_state:  # Skip the last state
-                    GLM_mat[rep, :] += np.ones((1)) * start_params[nr_of_genes, 0]
+                    GLM_mat[rep, :] += (
+                        np.ones((1)) * start_params[nr_of_genes, 0]
+                    )
                 elif State == bg_state:  # TODO: Code duplication
-                    GLM_mat[rep, :] -= np.ones((1)) * start_params[nr_of_genes, 0]
+                    GLM_mat[rep, :] -= (
+                        np.ones((1)) * start_params[nr_of_genes, 0]
+                    )
                 else:
                     continue
             else:
                 GLM_mat[rep, :] += np.ones((1)) * start_params[gene_nr, 0]
-                GLM_mat[rep, :] += np.ones((1)) * start_params[nr_of_genes + State, 0]
+                GLM_mat[rep, :] += (
+                    np.ones((1)) * start_params[nr_of_genes + State, 0]
+                )
         else:
             if bg_type == "None":
                 GLM_mat[rep, :] += np.ones((1)) * start_params[State, 0]
@@ -793,19 +839,29 @@ def get_expected_mean_and_var(
                 if State < nr_of_states - 1:
                     GLM_mat[rep, :] += np.ones((1)) * start_params[gene_nr, 0]
                     if State == fg_state:  # Skip the last state
-                        GLM_mat[rep, :] -= np.ones((1)) * start_params[nr_of_genes, 0]
+                        GLM_mat[rep, :] -= (
+                            np.ones((1)) * start_params[nr_of_genes, 0]
+                        )
                     elif State == bg_state:  # TODO: Code duplication
-                        GLM_mat[rep, :] += np.ones((1)) * start_params[nr_of_genes, 0]
+                        GLM_mat[rep, :] += (
+                            np.ones((1)) * start_params[nr_of_genes, 0]
+                        )
                     else:
                         continue
                 else:
-                    GLM_mat[rep, :] += np.ones((1)) * start_params[nr_of_genes + 1, 0]
+                    GLM_mat[rep, :] += (
+                        np.ones((1)) * start_params[nr_of_genes + 1, 0]
+                    )
             elif bg_type == "Coverage":
                 GLM_mat[rep, :] += np.ones((1)) * start_params[gene_nr, 0]
                 if State == fg_state:  # Skip the last state
-                    GLM_mat[rep, :] -= np.ones((1)) * start_params[nr_of_genes, 0]
+                    GLM_mat[rep, :] -= (
+                        np.ones((1)) * start_params[nr_of_genes, 0]
+                    )
                 elif State == bg_state:  # TODO: Code duplication
-                    GLM_mat[rep, :] += np.ones((1)) * start_params[nr_of_genes, 0]
+                    GLM_mat[rep, :] += (
+                        np.ones((1)) * start_params[nr_of_genes, 0]
+                    )
                 else:
                     continue
             else:
@@ -822,8 +878,12 @@ def get_expected_mean_and_var(
         if bg_type == "Coverage_bck":
             GLM_mat_alt = np.zeros((nr_of_rep, 1))
             for rep in range(nr_of_rep):
-                GLM_mat_alt[rep, :] += np.ones((1)) * np.log(lib_size[str(rep)])
-            GLM_mat_alt += start_params[gene_nr, 0] - abs(start_params[nr_of_genes, 0])
+                GLM_mat_alt[rep, :] += np.ones((1)) * np.log(
+                    lib_size[str(rep)]
+                )
+            GLM_mat_alt += start_params[gene_nr, 0] - abs(
+                start_params[nr_of_genes, 0]
+            )
             mean_mat_alt = np.tile(np.exp(GLM_mat_alt), (1, gene_len))
             disp_alt = mean_mat_alt * disp / mean_mat
             var_mat_alt = mean_mat * disp_alt * (mean_mat**2)
@@ -838,7 +898,12 @@ def get_expected_mean_and_var(
 
 
 def predict_expression_log_likelihood_for_gene(
-    CurrStackSum, State, nr_of_genes, gene_nr, EmissionParameters, curr_type="fg"
+    CurrStackSum,
+    State,
+    nr_of_genes,
+    gene_nr,
+    EmissionParameters,
+    curr_type="fg",
 ):
     """Predict the likelihood of expression for a gene."""
     nr_of_rep = EmissionParameters["NrOfReplicates"]
@@ -858,7 +923,9 @@ def predict_expression_log_likelihood_for_gene(
         emp_var = np.zeros_like(mean_mat)
         for rep in range(nr_of_rep):
             for i in range(nr_of_rep):
-                mu[i, :] = CurrStackSum[i, :] / mean_mat[i, :] * mean_mat[rep, :]
+                mu[i, :] = (
+                    CurrStackSum[i, :] / mean_mat[i, :] * mean_mat[rep, :]
+                )
             emp_var[rep, :] = np.var(mu, axis=0)
             var_mat[rep, :] = np.max(
                 np.vstack([var_mat[rep, :], emp_var[rep, :]]), axis=0

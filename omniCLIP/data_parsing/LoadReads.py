@@ -1,30 +1,30 @@
+"""omniCLIP is a CLIP-Seq peak caller.
+
+Copyright (C) 2017 Philipp Boss
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-    omniCLIP is a CLIP-Seq peak caller
 
-    Copyright (C) 2017 Philipp Boss
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-from Bio import SeqIO
-from collections import defaultdict
-from scipy.sparse import csr_matrix
 import gzip
+import os
+from collections import defaultdict
+
 import h5py
 import numpy as np
-import os
 import pysam
+from Bio import SeqIO
+from scipy.sparse import csr_matrix
 
 from . import GetCoverageFromBam
 
@@ -94,7 +94,11 @@ def load_data(
         genes_chr_dict[gene.chrom].append(gene)
 
     # Create a list of cromosomes
-    Chrs = [chrom for chrom in list(genes_chr_dict.keys()) if chrom.lower() != "chrm"]
+    Chrs = [
+        chrom
+        for chrom in list(genes_chr_dict.keys())
+        if chrom.lower() != "chrm"
+    ]
 
     # Creating the BAM files handle
     bam_handles = dict()
@@ -196,7 +200,9 @@ def load_data(
                     # Get the TC conversions
                     CurrSeq = str(CurrChrSeq.seq[start:stop]).upper()
                     GeneSeq = np.zeros((1, len(CurrSeq)), dtype=np.uint8)
-                    GeneSeq[0, :] = np.array([trdict[e] for e in list(CurrSeq)])
+                    GeneSeq[0, :] = np.array(
+                        [trdict[e] for e in list(CurrSeq)]
+                    )
 
                     # Ignore Variants at N positions
                     Variants[i][:, GeneSeq[0, :] == 4] = 0
@@ -226,7 +232,10 @@ def load_data(
                     # Only save the positions where a read in one of the
                     # replicates occured
                     SeqFile[gene_id]["Read-ends"].create_dataset(
-                        str(i), data=ReadEnds[i], compression="gzip", compression_opts=9
+                        str(i),
+                        data=ReadEnds[i],
+                        compression="gzip",
+                        compression_opts=9,
                     )
 
     SeqFile.close()

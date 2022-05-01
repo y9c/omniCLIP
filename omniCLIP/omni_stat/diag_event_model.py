@@ -1,20 +1,19 @@
-"""
-    omniCLIP is a CLIP-Seq peak caller
+"""omniCLIP is a CLIP-Seq peak caller.
 
-    Copyright (C) 2017 Philipp Boss
+Copyright (C) 2017 Philipp Boss
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import numpy as np
@@ -65,12 +64,14 @@ def pred_log_lik(counts, state, EmissionParameters, single_mix=None):
     return Prob
 
 
-def estimate_multinomial_parameters(Counts, NrOfCounts, EmissionParameters, x_0):
+def estimate_multinomial_parameters(
+    Counts, NrOfCounts, EmissionParameters, x_0
+):
     """Estimate the DirchMult parameters of a mixture component."""
     if len(Counts.shape) == 1:
         Counts = np.expand_dims(Counts, axis=1)
     args_TC = (Counts, NrOfCounts, EmissionParameters)
-    Bounds = tuple([(1e-100, None) for i in range(0, len(x_0))])
+    Bounds = tuple([(1e-100, None) for _ in range(0, len(x_0))])
     disp = 1 if EmissionParameters["verbosity"] > 0 else 0
 
     if EmissionParameters["diag_event_mod"] == "DirchMult":

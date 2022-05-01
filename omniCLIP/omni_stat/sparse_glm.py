@@ -1,36 +1,37 @@
+"""omniCLIP is a CLIP-Seq peak caller.
+
+Copyright (C) 2017 Philipp Boss
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+The code in this file has been adapted from the statsmodels package:
+https://github.com/statsmodels/statsmodels/blob/master/statsmodels/genmod/generalized_linear_model.py
+Thus, for this file the licence of the original file applies additionally.
 """
-    omniCLIP is a CLIP-Seq peak caller
 
-    Copyright (C) 2017 Philipp Boss
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-    The code in this file has been adapted from the statsmodels package:
-    https://github.com/statsmodels/statsmodels/blob/master/statsmodels/genmod/generalized_linear_model.py
-    Thus, for this file the licence of the original file applies additionally.
-"""
-
+import os
 import pickle
+import time
+
 import numpy as np
 import scipy
-from scipy.sparse import csc_matrix, linalg as sla
 import statsmodels
+from scipy.sparse import csc_matrix
+from scipy.sparse import linalg as sla
 from statsmodels.genmod import families
 from statsmodels.genmod.generalized_linear_model import GLM
 from statsmodels.tools.sm_exceptions import PerfectSeparationError
-import os
-import time
 
 __all__ = ["GLM"]
 
@@ -61,7 +62,10 @@ class sparse_glm(statsmodels.genmod.generalized_linear_model.GLM):
 
                 warnings.warn(
                     "The %s link function does not respect the domain of the %s family."
-                    % (family.link.__class__.__name__, family.__class__.__name__)
+                    % (
+                        family.link.__class__.__name__,
+                        family.__class__.__name__,
+                    )
                 )
         self.endog = endog
         self.exog = exog
@@ -251,7 +255,8 @@ class sparse_glm(statsmodels.genmod.generalized_linear_model.GLM):
                         "tmpdump." + time.asctime().replace(" ", "_") + ".dat",
                     )
                     pickle.dump(
-                        [lin_pred, mu, endog, exog, start_params], open(dump_path, "w")
+                        [lin_pred, mu, endog, exog, start_params],
+                        open(dump_path, "w"),
                     )
                     raise ValueError(
                         "The first guess on the deviance function returned a "

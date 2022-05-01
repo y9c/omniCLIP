@@ -1,30 +1,29 @@
+"""omniCLIP is a CLIP-Seq peak caller.
+
+Copyright (C) 2017 Philipp Boss
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-    omniCLIP is a CLIP-Seq peak caller
 
-    Copyright (C) 2017 Philipp Boss
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-from copy import deepcopy
 import itertools
 import multiprocessing
+from copy import deepcopy
+
 import numpy as np
 from scipy.special import logsumexp
 
-from . import diag_event_model
-from . import emission_prob
+from . import diag_event_model, emission_prob
 
 
 def em(
@@ -56,9 +55,9 @@ def em(
                         EmissionParameters["Diag_event_params"]["mix_comp"][
                             curr_state
                         ] = deepcopy(
-                            EmissionParameters["Diag_event_params"]["mix_comp"][
-                                template_state
-                            ]
+                            EmissionParameters["Diag_event_params"][
+                                "mix_comp"
+                            ][template_state]
                         )
                         EmissionParameters["Diag_event_params"]["alpha"][
                             curr_state
@@ -85,7 +84,9 @@ def em(
                     EmissionParameters["Diag_event_params"]["alpha"][
                         curr_state
                     ] = deepcopy(
-                        EmissionParameters["Diag_event_params"]["alpha"][template_state]
+                        EmissionParameters["Diag_event_params"]["alpha"][
+                            template_state
+                        ]
                     )
                     continue
         print("Estimating state " + str(curr_state))
@@ -106,7 +107,9 @@ def em(
             verbosity=verbosity,
         )
         EmissionParameters["Diag_event_params"]["alpha"][curr_state] = alpha
-        EmissionParameters["Diag_event_params"]["mix_comp"][curr_state] = mixtures
+        EmissionParameters["Diag_event_params"]["mix_comp"][
+            curr_state
+        ] = mixtures
 
     return EmissionParameters
 
@@ -135,36 +138,46 @@ def Parallel_estimate_mixture_params(
         curr_counts = np.expand_dims(curr_counts, axis=1)
 
     if np.sum(np.sum(curr_counts, axis=0) > 0) > 0:
-        curr_nr_of_counts = curr_nr_of_counts[:, np.sum(curr_counts, axis=0) > 0]
+        curr_nr_of_counts = curr_nr_of_counts[
+            :, np.sum(curr_counts, axis=0) > 0
+        ]
         curr_counts = curr_counts[:, np.sum(curr_counts, axis=0) > 0]
 
     # Test for fitting distributions only on diag events
     if np.sum(np.sum(curr_counts, axis=0) > 10) > 10:
-        curr_nr_of_counts = curr_nr_of_counts[:, np.sum(curr_counts, axis=0) > 10]
+        curr_nr_of_counts = curr_nr_of_counts[
+            :, np.sum(curr_counts, axis=0) > 10
+        ]
         curr_counts = curr_counts[:, np.sum(curr_counts, axis=0) > 10]
 
-    tracks_per_rep = EmissionParameters["Diag_event_params"]["alpha"][curr_state].shape[
-        0
-    ]
+    tracks_per_rep = EmissionParameters["Diag_event_params"]["alpha"][
+        curr_state
+    ].shape[0]
     NrOfReplicates = curr_counts.shape[0] // tracks_per_rep
 
     if len(curr_counts.shape) == 1:
         curr_counts = np.expand_dims(curr_counts, axis=1)
 
     # Save old lls mixtures and alphas
-    mixtures = deepcopy(EmissionParameters["Diag_event_params"]["mix_comp"][curr_state])
+    mixtures = deepcopy(
+        EmissionParameters["Diag_event_params"]["mix_comp"][curr_state]
+    )
 
     scored_counts = score_counts(curr_counts, curr_state, EmissionParameters)
     scored_counts += np.tile(
         np.log(mixtures[:, np.newaxis]), (1, scored_counts.shape[1])
     )
-    ll = np.sum(np.sum(logsumexp(scored_counts, axis=0) + np.log(curr_nr_of_counts)))
+    ll = np.sum(
+        np.sum(logsumexp(scored_counts, axis=0) + np.log(curr_nr_of_counts))
+    )
 
     alphas_list.append(
         deepcopy(EmissionParameters["Diag_event_params"]["alpha"][curr_state])
     )
     mixtures_list.append(
-        deepcopy(EmissionParameters["Diag_event_params"]["mix_comp"][curr_state])
+        deepcopy(
+            EmissionParameters["Diag_event_params"]["mix_comp"][curr_state]
+        )
     )
     lls_list.append(ll)
 
@@ -180,13 +193,17 @@ def Parallel_estimate_mixture_params(
     )
 
     if EmissionParameters["nb_proc"] == 1:
-        results = [Parallel_estimate_single_mixture_params(args) for args in data]
+        results = [
+            Parallel_estimate_single_mixture_params(args) for args in data
+        ]
     else:
         print("Spawning processes")
         pool = multiprocessing.get_context("spawn").Pool(
             EmissionParameters["nb_proc"], maxtasksperchild=5
         )
-        results = pool.imap(Parallel_estimate_single_mixture_params, data, chunksize=1)
+        results = pool.imap(
+            Parallel_estimate_single_mixture_params, data, chunksize=1
+        )
         pool.close()
         pool.join()
         print("Collecting results")
@@ -222,8 +239,12 @@ def Parallel_estimate_single_mixture_params(args):
     old_ll = 0
     ll = -10
 
-    OldAlpha = deepcopy(EmissionParameters["Diag_event_params"]["alpha"][curr_state])
-    mixtures = deepcopy(EmissionParameters["Diag_event_params"]["mix_comp"][curr_state])
+    OldAlpha = deepcopy(
+        EmissionParameters["Diag_event_params"]["alpha"][curr_state]
+    )
+    mixtures = deepcopy(
+        EmissionParameters["Diag_event_params"]["mix_comp"][curr_state]
+    )
 
     if curr_init > 0:
         OldAlpha = np.random.uniform(low=0.0001, high=0.1, size=OldAlpha.shape)
@@ -243,12 +264,16 @@ def Parallel_estimate_single_mixture_params(args):
             curr_counts, curr_nr_of_counts, EmissionParameters, OldAlpha[:]
         )
         # Compute ll
-        scored_counts = score_counts(curr_counts, curr_state, EmissionParameters)
+        scored_counts = score_counts(
+            curr_counts, curr_state, EmissionParameters
+        )
         scored_counts += np.tile(
             np.log(mixtures[:, np.newaxis]), (1, scored_counts.shape[1])
         )
         ll = np.sum(
-            np.sum(logsumexp(scored_counts, axis=0) + np.log(curr_nr_of_counts))
+            np.sum(
+                logsumexp(scored_counts, axis=0) + np.log(curr_nr_of_counts)
+            )
         )
 
         OldAlpha = deepcopy(
@@ -263,7 +288,9 @@ def Parallel_estimate_single_mixture_params(args):
         for iter_nr in range(max_nr_iter):
             print("em-iteration " + str(iter_nr))
 
-            scored_counts = score_counts(curr_counts, curr_state, EmissionParameters)
+            scored_counts = score_counts(
+                curr_counts, curr_state, EmissionParameters
+            )
             scored_counts += np.tile(
                 np.log(mixtures[:, np.newaxis]), (1, scored_counts.shape[1])
             )
@@ -273,7 +300,10 @@ def Parallel_estimate_single_mixture_params(args):
 
             old_ll = ll
             ll = np.sum(
-                np.sum(logsumexp(scored_counts, axis=0) + np.log(curr_nr_of_counts))
+                np.sum(
+                    logsumexp(scored_counts, axis=0)
+                    + np.log(curr_nr_of_counts)
+                )
             )
 
             if np.abs(old_ll - ll) < stop_crit:
@@ -295,13 +325,17 @@ def Parallel_estimate_single_mixture_params(args):
             curr_weights = np.exp(normalised_scores)
             curr_weights = (
                 curr_weights
-                == np.tile(np.max(curr_weights, axis=0), (curr_weights.shape[0], 1))
+                == np.tile(
+                    np.max(curr_weights, axis=0), (curr_weights.shape[0], 1)
+                )
             ) * 1.0
 
             zero_mix = np.sum(curr_weights, axis=1) == 0
             zero_ix = np.where(zero_mix)[0].tolist()
 
-            EmissionParameters["Diag_event_params"]["mix_comp"][curr_state] = mixtures
+            EmissionParameters["Diag_event_params"]["mix_comp"][
+                curr_state
+            ] = mixtures
             # Get number of positions that are used. (In case there are fewer entries that rand_sample_size in counts)
             rand_size = min(rand_sample_size, curr_counts.shape[1])
             for i in zero_ix:
@@ -313,7 +347,9 @@ def Parallel_estimate_single_mixture_params(args):
                         / np.float64(np.sum(curr_nr_of_counts[0, :]))
                     ),
                 )
-                curr_counts = np.hstack([curr_counts, curr_counts[:, random_ix]])
+                curr_counts = np.hstack(
+                    [curr_counts, curr_counts[:, random_ix]]
+                )
                 curr_nr_of_counts = np.hstack(
                     [curr_nr_of_counts, np.ones((1, rand_size))]
                 )
@@ -329,7 +365,9 @@ def Parallel_estimate_single_mixture_params(args):
                 EmissionParameters["Diag_event_params"]["nr_mix_comp"]
             ):
                 local_counts = curr_counts
-                local_nr_counts = curr_nr_of_counts * curr_weights[curr_mix_comp, :]
+                local_nr_counts = (
+                    curr_nr_of_counts * curr_weights[curr_mix_comp, :]
+                )
                 local_counts = local_counts[:, local_nr_counts[0, :] > 0]
                 local_nr_counts = local_nr_counts[0, local_nr_counts[0, :] > 0]
                 if len(local_counts.shape) == 1:
@@ -343,11 +381,13 @@ def Parallel_estimate_single_mixture_params(args):
 
                 if curr_mix_comp in zero_ix:
                     OldAlpha[:, curr_mix_comp] = np.random.uniform(
-                        low=0.0001, high=0.1, size=OldAlpha[:, curr_mix_comp].shape
+                        low=0.0001,
+                        high=0.1,
+                        size=OldAlpha[:, curr_mix_comp].shape,
                     )
-                    OldAlpha[np.random.randint(OldAlpha.shape[0]), curr_mix_comp] = (
-                        np.random.random() * 10.0
-                    )
+                    OldAlpha[
+                        np.random.randint(OldAlpha.shape[0]), curr_mix_comp
+                    ] = (np.random.random() * 10.0)
                     OldAlpha[-2, curr_mix_comp] = np.random.random() * 1.0
                     OldAlpha[-1, curr_mix_comp] = np.random.random() * 10.0
                 else:
@@ -360,9 +400,9 @@ def Parallel_estimate_single_mixture_params(args):
                 EmissionParameters["Diag_event_params"]["mix_comp"][
                     curr_state
                 ] = deepcopy(mixtures)
-            EmissionParameters["Diag_event_params"]["alpha"][curr_state] = deepcopy(
-                OldAlpha
-            )
+            EmissionParameters["Diag_event_params"]["alpha"][
+                curr_state
+            ] = deepcopy(OldAlpha)
             # Check if convergence has been achieved.
 
         mixtures[zero_ix] = np.min(mixtures[mixtures > 0])
@@ -374,7 +414,9 @@ def Parallel_estimate_single_mixture_params(args):
 def score_counts(counts, state, EmissionParameters):
     """Scores the counts for each mixture component."""
 
-    nr_mixture_components = EmissionParameters["Diag_event_params"]["nr_mix_comp"]
+    nr_mixture_components = EmissionParameters["Diag_event_params"][
+        "nr_mix_comp"
+    ]
     # Initialize the return array
     scored_counts = np.zeros((nr_mixture_components, counts.shape[1]))
 
@@ -384,7 +426,9 @@ def score_counts(counts, state, EmissionParameters):
             counts, state, EmissionParameters, single_mix=mix_comp
         )
         scored_counts[mix_comp, :] += np.log(
-            EmissionParameters["Diag_event_params"]["mix_comp"][state][mix_comp]
+            EmissionParameters["Diag_event_params"]["mix_comp"][state][
+                mix_comp
+            ]
         )
 
     return scored_counts
