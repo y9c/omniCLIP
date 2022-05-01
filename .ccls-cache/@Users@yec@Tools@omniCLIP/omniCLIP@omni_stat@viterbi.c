@@ -2550,6 +2550,7 @@ static const char __pyx_k_j[] = "j";
 static const char __pyx_k_k[] = "k";
 static const char __pyx_k_id[] = "id";
 static const char __pyx_k_np[] = "np";
+static const char __pyx_k_int[] = "int";
 static const char __pyx_k_new[] = "__new__";
 static const char __pyx_k_obj[] = "obj";
 static const char __pyx_k_Path[] = "Path";
@@ -2571,7 +2572,6 @@ static const char __pyx_k_class[] = "__class__";
 static const char __pyx_k_dtype[] = "dtype";
 static const char __pyx_k_error[] = "error";
 static const char __pyx_k_flags[] = "flags";
-static const char __pyx_k_int64[] = "int64";
 static const char __pyx_k_numpy[] = "numpy";
 static const char __pyx_k_range[] = "range";
 static const char __pyx_k_shape[] = "shape";
@@ -2722,7 +2722,7 @@ static PyObject *__pyx_n_s_i;
 static PyObject *__pyx_n_u_i;
 static PyObject *__pyx_n_s_id;
 static PyObject *__pyx_n_s_import;
-static PyObject *__pyx_n_s_int64;
+static PyObject *__pyx_n_s_int;
 static PyObject *__pyx_n_s_itemsize;
 static PyObject *__pyx_kp_s_itemsize_0_for_cython_array;
 static PyObject *__pyx_n_s_j;
@@ -3047,7 +3047,7 @@ static PyObject *__pyx_pf_8omniCLIP_7viterbi_viterbi(CYTHON_UNUSED PyObject *__p
  *     cdef int [:,:] TraceBack
  *     cdef unsigned int SeqLen = EmmisionProbabilites.shape[1]             # <<<<<<<<<<<<<<
  *     cdef unsigned int NrOfStates = EmmisionProbabilites.shape[0]
- *     cdef np.ndarray[np.int_t, ndim=1] Path = np.zeros(SeqLen, dtype=np.int64)
+ *     cdef np.ndarray[np.int_t, ndim=1] Path = np.zeros(SeqLen, dtype=np.int)
  */
   __Pyx_TraceLine(38,0,__PYX_ERR(0, 38, __pyx_L1_error))
   __pyx_v_SeqLen = (__pyx_v_EmmisionProbabilites->dimensions[1]);
@@ -3056,7 +3056,7 @@ static PyObject *__pyx_pf_8omniCLIP_7viterbi_viterbi(CYTHON_UNUSED PyObject *__p
  *     cdef int [:,:] TraceBack
  *     cdef unsigned int SeqLen = EmmisionProbabilites.shape[1]
  *     cdef unsigned int NrOfStates = EmmisionProbabilites.shape[0]             # <<<<<<<<<<<<<<
- *     cdef np.ndarray[np.int_t, ndim=1] Path = np.zeros(SeqLen, dtype=np.int64)
+ *     cdef np.ndarray[np.int_t, ndim=1] Path = np.zeros(SeqLen, dtype=np.int)
  *     cdef double [:,:] V
  */
   __Pyx_TraceLine(39,0,__PYX_ERR(0, 39, __pyx_L1_error))
@@ -3065,7 +3065,7 @@ static PyObject *__pyx_pf_8omniCLIP_7viterbi_viterbi(CYTHON_UNUSED PyObject *__p
   /* "omniCLIP/omni_stat/viterbi.pyx":40
  *     cdef unsigned int SeqLen = EmmisionProbabilites.shape[1]
  *     cdef unsigned int NrOfStates = EmmisionProbabilites.shape[0]
- *     cdef np.ndarray[np.int_t, ndim=1] Path = np.zeros(SeqLen, dtype=np.int64)             # <<<<<<<<<<<<<<
+ *     cdef np.ndarray[np.int_t, ndim=1] Path = np.zeros(SeqLen, dtype=np.int)             # <<<<<<<<<<<<<<
  *     cdef double [:,:] V
  *     cdef double CurrMax, Temp
  */
@@ -3086,7 +3086,7 @@ static PyObject *__pyx_pf_8omniCLIP_7viterbi_viterbi(CYTHON_UNUSED PyObject *__p
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 40, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_int64); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 40, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_int); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 40, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(0, 40, __pyx_L1_error)
@@ -19669,7 +19669,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_u_i, __pyx_k_i, sizeof(__pyx_k_i), 0, 1, 0, 1},
   {&__pyx_n_s_id, __pyx_k_id, sizeof(__pyx_k_id), 0, 0, 1, 1},
   {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
-  {&__pyx_n_s_int64, __pyx_k_int64, sizeof(__pyx_k_int64), 0, 0, 1, 1},
+  {&__pyx_n_s_int, __pyx_k_int, sizeof(__pyx_k_int), 0, 0, 1, 1},
   {&__pyx_n_s_itemsize, __pyx_k_itemsize, sizeof(__pyx_k_itemsize), 0, 0, 1, 1},
   {&__pyx_kp_s_itemsize_0_for_cython_array, __pyx_k_itemsize_0_for_cython_array, sizeof(__pyx_k_itemsize_0_for_cython_array), 0, 0, 1, 0},
   {&__pyx_n_s_j, __pyx_k_j, sizeof(__pyx_k_j), 0, 0, 1, 1},

@@ -188,8 +188,8 @@ def FitTransistionParametersSimple(
     # Create Y
     Y = np.hstack(
         (
-            np.ones((1, len_same), dtype=np.int),
-            np.zeros((1, len_other), dtype=np.int),
+            np.ones((1, len_same), dtype=np.int64),
+            np.zeros((1, len_other), dtype=np.int64),
         )
     )[0, :].T
     classes = np.unique(Y)
