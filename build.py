@@ -1,9 +1,9 @@
-import numpy as np
+from distutils.command.build_ext import build_ext
 
+import numpy as np
 from Cython.Build import cythonize
 from setuptools import Extension
 from setuptools.dist import Distribution
-from distutils.command.build_ext import build_ext
 
 
 def build(setup_kwargs):
@@ -21,9 +21,10 @@ def build(setup_kwargs):
     )
     setup_kwargs.update(
         {
-            "extmodules": extensions,
+            "ext_modules": extensions,
             "cmdclass": {"build_ext": build_ext},
             "include_dirs": [np.get_include()],
+            "zip_safe": False,
         }
     )
     return setup_kwargs

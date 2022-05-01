@@ -1,9 +1,10 @@
 [tool.poetry]
 name = "omniclip"
-version = "0.2.2"
+version = "0.2.5"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["Philipp Boss <philipp.drewe@googlemail.com>"]
 readme = "README.md"
+repository = "https://github.com/y9c/omniCLIP"
 packages = [{ include = "omniCLIP" }]
 include = [{ path = "omniCLIP/omni_stat/viterbi.pyx" }]
 build = "build.py"
