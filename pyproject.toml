@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "omniclip"
-version = "0.2.6"
+version = "0.2.7"
 description = ""
 authors = ["Philipp Boss <philipp.drewe@googlemail.com>"]
 readme = "README.md"

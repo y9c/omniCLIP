@@ -310,7 +310,7 @@ def Parallel_estimate_single_mixture_params(args):
                     rand_size,
                     p=(
                         curr_nr_of_counts[0, :]
-                        / np.float(np.sum(curr_nr_of_counts[0, :]))
+                        / np.float64(np.sum(curr_nr_of_counts[0, :]))
                     ),
                 )
                 curr_counts = np.hstack([curr_counts, curr_counts[:, random_ix]])
